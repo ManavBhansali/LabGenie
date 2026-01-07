@@ -8,20 +8,30 @@ interface User {
   profileImageUrl?: string;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export function useAuth() {
   const { data: user, isLoading, error } = useQuery<User | null>({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["auth-user"],
     retry: false,
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/auth/user`, {
+        credentials: "include",
+      });
+
+      if (res.status === 401) return null;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      return res.json();
+    },
   });
 
   // Debug logs
-  console.log('🔧 [useAuth] Hook state:', { 
-    user, 
-    isLoading, 
+  console.log("🔧 [useAuth] Hook state:", {
+    user,
+    isLoading,
     error,
     isAuthenticated: !!user,
-    token: localStorage.getItem('token') ? 'Present' : 'Missing',
-    tokenValue: localStorage.getItem('token') ? localStorage.getItem('token')?.substring(0, 20) + '...' : 'None'
   });
 
   return {
